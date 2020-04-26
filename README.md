@@ -1,17 +1,21 @@
 # color_transfer
 
-https://www.cs.tau.ac.il/~turkel/imagepapers/ColorTransfer.pdf
-を実装を試みたが，上手くいかず原因も分かりませんでした．
-論文に乗っているRGBからXYZ色空間への変換行列は何を元にして得られたのか不明だったため，sRGBからXYZ色空間への変換式を利用しました．
-<!-- 具体的な変換手順は例えば教科書に乗っています．
-https://www.springer.com/jp/book/9781447166832 -->
-論文に乗っているlab色空間での変換式(10),(11)はcolor_transfer内に記述してあります．
+Color Transfer Between images[^1]の実装をしました．
+詳しくは[qiita][2]にまとめました．
 
 # 実行結果
 ![入力画像](readme_images/fig1.png)
+![参照画像](readme_images/fig2.png)
+![実験結果](readme_images/source=fig1target=fig2.png)
+![論文中の実験結果](readme_images/reference2.png)
+左から順に入力画像，参照画像，自分の実験結果，論文中の実験結果です．右から2番目の実験結果の色がおかしくなりました．
+macで論文中の画像をスクリーンショットする事で，入力画像と参照画像を獲得しました．
 
-自分の実験結果は次のようになりました．
+# todo
+クラスタリングして各クラスタで異なる色の変換を行えるようにする．
+
+[^1]:https://www.cs.tau.ac.il/~turkel/imagepapers/ColorTransfer.pdf
+
+[2]:https://qiita.com/wkiino/items/f4a8f340016951107646
 
 
-# 確認したいこと
-式(11)でl’を求めた後に加算するのは参照画像の平均であってますか？
