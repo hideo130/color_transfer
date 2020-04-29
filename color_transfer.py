@@ -86,12 +86,12 @@ def color_transfer(source_img, target_img):
 
     return:参照画像（target img）の色に変換した入力画像(source img)
     """
-    suorce_mean = torch.mean(source_img, dim=[0, 1])
+    source_mean = torch.mean(source_img, dim=[0, 1])
     target_mean = torch.mean(target_img, dim=[0, 1])
     source_std = torch.std(source_img, dim=[0, 1], unbiased=False)
     target_std = torch.std(target_img, dim=[0, 1], unbiased=False)
     new_lab_img = torch.div(target_std, source_std) * \
-        (source_img - suorce_mean) + target_mean
+        (source_img - source_mean) + target_mean
     return new_lab_img
 
 
