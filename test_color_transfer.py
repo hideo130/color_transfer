@@ -19,16 +19,51 @@ class TestColorTransfer(unittest.TestCase):
         new_srgb_img = torch.where(srgb_img <= 0.0031308, 12.92 *
                                    srgb_img, 1.055 * torch.pow(srgb_img, 1/2.4) - 0.055)
 
-        (srgb_img - new_srgb_img)
+    # def test_matrix(self):
+    #     conversion = Conversion_Srgb_LSM()
+    #     tmp = torch.mm(conversion.LMS_to_lab_matrix,
+    #                    conversion.LMS_to_lab_matrix)
+    #     tmp2 = torch.mm(conversion.lms_to_srgb, conversion.srgb_to_lms)
+    #     torch.isclose(tmp, tmp2)
 
-    def assertTochEqual(tensor1, tensor2):
-        tmp = tensor1 - tensor2
 
-    def test_matrix(self):
-        conversion = Conversion_Srgb_LSM()
-        tmp = torch.mm(conversion.LMS_to_lab_matrix,
-                       conversion.LMS_to_lab_matrix)
-        tmp2 = torch.mm(conversion.lms_to_srgb, conversion.srgb_to_lms)
+def assertScalarEqual(tensor1, tensor2):
+    tmp = torch.abs(tensor1 - tensor2)
+    assert tmp.item() <= 0.0001, print(tensor1, tensor2, tmp)
+    # assert torch.isclose(tensor1, tensor2), print(tensor1.item(), tensor2)
+
+
+def check_srgb_matrix():
+    """
+    srgbでの赤緑青の値をxy平面に写像した値は規格TU-R BT.709で決められている．
+    この値のペアを利用して，srgbからXYZ色空間への変換が正しく行われているか確認する関数．
+    メモTU-R BT.709はD65を利用している．
+    """
+    def check(color, x, y):
+        color = conversion.from_srgb_gamma(color)
+        xyz = torch.mm(conversion.srgb_to_xyz, color)
+        cal_x, cal_y = get_xy(xyz)
+        x, y = torch.tensor([x]), torch.tensor([y])
+        assertScalarEqual(cal_x, x)
+        assertScalarEqual(cal_y, y)
+    conversion = Conversion_Srgb_LSM()
+    red = torch.tensor([1, 0, 0], dtype=torch.float32).reshape((3, 1))
+    green = torch.tensor([0, 1, 0], dtype=torch.float32).reshape((3, 1))
+    blue = torch.tensor([0, 0, 1], dtype=torch.float32).reshape((3, 1))
+    white = torch.tensor([1, 1, 1], dtype=torch.float32).reshape((3, 1))
+
+    red_x, red_y = 0.640, 0.3300
+    green_x, green_y = 0.3, 0.6
+    blue_x, blue_y = 0.15, 0.060
+    white_x, white_y = 0.3127, 0.3290
+    check(red, red_x, red_y)
+    check(green, green_x, green_y)
+    check(blue, blue_x, blue_y)
+    check(white, white_x, white_y)
+
+
+def get_xy(xyz):
+    return xyz[0] / torch.sum(xyz), xyz[1] / torch.sum(xyz)
 
 
 def test2(source_path, target_path, save_dir):
@@ -65,4 +100,5 @@ def constract():
 
 if __name__ == "__main__":
     # test2("images/雨宮優子2.jpg", "images/天使ちゃん.png", "results/")
-    constract()
+    # constract()
+    check_srgb_matrix()

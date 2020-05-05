@@ -6,15 +6,15 @@ from pathlib import Path
 
 class Conversion_Srgb_LSM:
     def __init__(self):
-        srgb_to_xyz = torch.tensor([
+        self.srgb_to_xyz = torch.tensor([
             [0.412453, 0.357580, 0.180423],
             [0.212671, 0.715160, 0.072169],
             [0.019334, 0.119193, 0.950227]])
         self.modify_matrix = False
         if self.modify_matrix:
             one = torch.ones(3, dtype=torch.float32).reshape((3, 1))
-            x = torch.mm(srgb_to_xyz.inverse(), one)
-            srgb_to_xyz = srgb_to_xyz * x.T
+            x = torch.mm(self.srgb_to_xyz.inverse(), one)
+            self.srgb_to_xyz = self.srgb_to_xyz * x.T
 
         # # 論文に乗っている変換式．
         # rgb_to_xyz = torch.tensor([
@@ -29,7 +29,7 @@ class Conversion_Srgb_LSM:
             [0.3897, 0.6890, -0.0787],
             [-0.2298, 1.1834, 0.0464],
             [0.0000, 0.0000, 1.0000]])
-        self.srgb_to_lms = torch.mm(xyz_to_lms, srgb_to_xyz)
+        self.srgb_to_lms = torch.mm(xyz_to_lms, self.srgb_to_xyz)
         # self.srgb_to_lms = rgb_to_lms
         self.lms_to_srgb = self.srgb_to_lms.inverse()
         # self.lms_to_srgb = torch.tensor([
@@ -50,14 +50,34 @@ class Conversion_Srgb_LSM:
         m2 = torch.diag(vec)
         self.lab_to_LMS_matrix = torch.einsum("mc, cd->md", m1, m2)
 
+    def from_srgb_gamma(self, srgb_img):
+        """
+        srgb -> xyzにする時のガンマ補正
+        input (non) srgb_img tensor[0, 1]
+        output (linear) srgb_img tensor
+        """
+        linear_srgb = torch.where(srgb_img <= 0.04045, srgb_img/12.92,
+                                  torch.pow((srgb_img+0.055)/1.055, 2.4))
+        return linear_srgb
+
+    def to_srgb_gamma(self, srgb_img):
+        """
+        xyz -> srgbにする時のガンマ補正
+        input （linear) srgb_img tensor
+        output (non) srgb_img tensor[0, 1]
+
+        """
+        srgb_img = torch.where(srgb_img <= 0.0031308, 12.92 *
+                               srgb_img, 1.055 * torch.pow(srgb_img, 1/2.4) - 0.055)
+        return srgb_img
+
     def srgb_to_lab(self, srgb_img):
         """
         input srgb_img tensor [0, 1]
         return lab_img tensor
         """
         if not self.modify_matrix:
-            srgb_img = torch.where(srgb_img <= 0.04045, srgb_img/12.92,
-                                   torch.pow((srgb_img+0.055)/1.055, 2.4))
+            srgb_img = self.from_srgb_gamma(srgb_img)
         lms_img = torch.einsum("whc, mc -> whm", srgb_img, self.srgb_to_lms)
         LMS_img = torch.log(lms_img)
         lab_img = torch.einsum("whc, mc-> whm", LMS_img,
@@ -74,8 +94,7 @@ class Conversion_Srgb_LSM:
         lms_img = torch.exp(LMS_img)
         srgb_img = torch.einsum("whc, mc -> whm", lms_img, self.lms_to_srgb)
         if not self.modify_matrix:
-            srgb_img = torch.where(srgb_img <= 0.0031308, 12.92 *
-                                   srgb_img, 1.055 * torch.pow(srgb_img, 1/2.4) - 0.055)
+            srgb_img = self.to_srgb_gamma(srgb_img)
         return srgb_img
 
 
