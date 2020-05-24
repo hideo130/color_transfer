@@ -20,7 +20,7 @@ python3 color_transfer. py source_img_path target_img_path save_dir/
 イラストに適応した結果です．
 |入力画像|参照画像|結果1|結果2|
 |---|---|---|---|
-|![ef](readme_images/ef.jgp)|![an](readme_images/天使ちゃん.png)|![結果1](readme_images/source=天使ちゃんtarget=ef.png)|![結果2](readme_images/source=eftarget=天使ちゃん.png)
+|![ef](readme_images/ef.png)|![an](readme_images/天使ちゃん.png)|![結果1](readme_images/source=eftarget=天使ちゃん.png)|![結果2](readme_images/source=天使ちゃんtarget=ef.png)
 
 
 [1]:https://www.cs.tau.ac.il/~turkel/imagepapers/ColorTransfer.pdf
