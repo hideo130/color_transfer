@@ -15,16 +15,18 @@ class TestColorTransfer(unittest.TestCase):
         lms_img = torch.einsum("whc, mc -> whm", srgb_img, self.srgb_to_lms)
         LMS_img = torch.log(lms_img)
         lms_img = torch.exp(LMS_img)
-        srgb_img = torch.einsum("whc, mc -> whm", lms_img, self.lms_to_srgb)
-        new_srgb_img = torch.where(srgb_img <= 0.0031308, 12.92 *
-                                   srgb_img, 1.055 * torch.pow(srgb_img, 1/2.4) - 0.055)
+        new_srgb_img = torch.einsum(
+            "whc, mc -> whm", lms_img, self.lms_to_srgb)
+        new_srgb_img = torch.where(new_srgb_img <= 0.0031308, 12.92 *
+                                   new_srgb_img, 1.055 * torch.pow(new_srgb_img, 1/2.4) - 0.055)
+        self.test_matrix(new_srgb_img, srgb_img)
 
-    # def test_matrix(self):
-    #     conversion = Conversion_Srgb_LSM()
-    #     tmp = torch.mm(conversion.LMS_to_lab_matrix,
-    #                    conversion.LMS_to_lab_matrix)
-    #     tmp2 = torch.mm(conversion.lms_to_srgb, conversion.srgb_to_lms)
-    #     torch.isclose(tmp, tmp2)
+    def test_matrix(self):
+        conversion = Conversion_Srgb_LSM()
+        tmp = torch.mm(conversion.LMS_to_lab_matrix,
+                       conversion.LMS_to_lab_matrix)
+        tmp2 = torch.mm(conversion.lms_to_srgb, conversion.srgb_to_lms)
+        torch.isclose(tmp, tmp2)
 
 
 def assertScalarEqual(tensor1, tensor2):
