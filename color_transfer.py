@@ -95,6 +95,7 @@ class Conversion_Srgb_LSM:
         srgb_img = torch.einsum("whc, mc -> whm", lms_img, self.lms_to_srgb)
         if not self.modify_matrix:
             srgb_img = self.to_srgb_gamma(srgb_img)
+        srgb_img = torch.clamp(srgb_img, min=0, max=1)
         return srgb_img
 
 
